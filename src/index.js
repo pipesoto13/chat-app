@@ -2,6 +2,7 @@ const path = require('path');
 const http = require('http');
 const express = require('express');
 const socketio = require('socket.io');
+const { generateMessage, generateLocationMessage } = require('./utils/messages')
 
 const app = express();
 const server = http.createServer(app);
@@ -29,14 +30,11 @@ io.on('connection', (socket) => {
 io.on('connection', (socket) => {
   console.log('New WebSocket connection!');
 
-  socket.emit('message', {
-    text: 'Welcome!',
-    createdAt: new Date().getTime(),
-  });
-  socket.broadcast.emit('message', 'A new user has joined the room!');
+  socket.emit('message', generateMessage('Welcome!'));
+  socket.broadcast.emit('message', generateMessage('A new user has joined the room!'));
 
   socket.on('sendMessage', (text, callback) => {
-    io.emit('message', text);
+    io.emit('message', generateMessage(text));
     callback('Delivered!');
   });
 
@@ -44,13 +42,13 @@ io.on('connection', (socket) => {
     //socket.broadcast.emit('message', `Location : ${coords.lat}, ${coords.long}`);
     io.emit(
       'locationMessage',
-      `https://google.com/maps?q=${coords.lat}, ${coords.long}`
+      generateLocationMessage(`https://google.com/maps?q=${coords.lat}, ${coords.long}`),
     );
     callback('Location shared!');
   });
 
   socket.on('disconnect', () => {
-    io.emit('message', 'User Disconnected');
+    io.emit('message', generateMessage('User Disconnected'));
   });
 });
 

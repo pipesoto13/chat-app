@@ -1,18 +1,18 @@
 const generateMessage = (text) => {
   return {
-      text,
-      createdAt: new Date().getTime()
-  }
-}
+    text,
+    createdAt: new Date().getTime(),
+  };
+};
 
 const generateLocationMessage = (url) => {
   return {
-      url,
-      createdAt: new Date().getTime()
-  }
-}
+    url,
+    createdAt: new Date().getTime(),
+  };
+};
 
 module.exports = {
   generateMessage,
-  generateLocationMessage
-}
+  generateLocationMessage,
+};
