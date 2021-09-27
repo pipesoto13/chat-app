@@ -31,8 +31,8 @@ io.on('connection', (socket) => {
 io.on('connection', (socket) => {
   console.log('New WebSocket connection!');
 
-  socket.emit('message', generateMessage('Welcome!'));
-  socket.broadcast.emit('message', generateMessage('A new user has joined the room!'));
+  //socket.emit('message', generateMessage('Welcome!'));
+  //socket.broadcast.emit('message', generateMessage('A new user has joined the room!'));
 
   socket.on('join', (options, callback) => {
     const { error, user } = addUser({ id: socket.id, ...options });
@@ -44,26 +44,34 @@ io.on('connection', (socket) => {
     // Join the room
     socket.join(user.room);
     // Welcome the user to the room
-    socket.emit('message', generateMessage('Welcome!'));
+    socket.emit('message', generateMessage('Admin', 'Welcome!'));
     // Broadcast an event to everyone in the room
     socket.broadcast.to(user.room).emit(
       'message',
-      generateMessage(`${user.username} has joined!`)
+      generateMessage('Admin', `${user.username} has joined!`)
     );
+    io.to(user.room).emit('roomData', {
+      room: user.room,
+      users: getUsersInRoom(user.room)
+    });
 
     callback();
   });
 
   socket.on('sendMessage', (text, callback) => {
-    io.emit('message', generateMessage(text));
+    const user  = getUser(socket.id);
+
+    io.to(user.room).emit('message', generateMessage(user.username, text));
     callback('Delivered!');
   });
 
   socket.on('sendLocation', (coords, callback) => {
+    const user = getUser(socket.id);
+    console.log(user);
     //socket.broadcast.emit('message', `Location : ${coords.lat}, ${coords.long}`);
-    io.emit(
+    io.to(user.room).emit(
       'locationMessage',
-      generateLocationMessage(`https://google.com/maps?q=${coords.lat}, ${coords.long}`),
+      generateLocationMessage(user.username, `https://google.com/maps?q=${coords.lat}, ${coords.long}`),
     );
     callback('Location shared!');
   });
@@ -72,7 +80,11 @@ io.on('connection', (socket) => {
     const user = removeUser(socket.id);
 
     if (user) {
-      io.to(user.room).emit('message', generateMessage(`${user.username} has left the room!`));
+      io.to(user.room).emit('message', generateMessage('Admin', `${user.username} has left the room!`));
+      io.to(user.room).emit('roomData', {
+        room: user.room,
+        users: getUsersInRoom(user.room)
+      });
     }
   });
 });
